@@ -20,6 +20,7 @@ public class HotelReservationSystem {
 
         try{
             Connection connection = DriverManager.getConnection(url, username, password);
+            Scanner scanner = new Scanner(System.in);
             while(true){
                 System.out.println();
                 System.out.println("HOTEL MANAGEMENT SYSTEM");
@@ -31,10 +32,10 @@ public class HotelReservationSystem {
                 System.out.println("5. Delete Reservations");
                 System.out.println("0. Exit");
                 System.out.println("Choose an option: ");
-                int choice = Scanner.nextInt();
+                int choice = scanner.nextInt();
                 switch(choice){
                     case 1:
-                        reserveRoom(connection, Scanner);
+                        reserveRoom(connection, scanner);
                         break;
                     case 2:
                         viewReservations(connection);
@@ -50,7 +51,7 @@ public class HotelReservationSystem {
                         break;
                     case 0:
                         exit();
-                        Scanner.close();
+                        scanner.close();
                         return;
                     default:
                         System.out.println("Invalid choice. Try again.");
@@ -104,7 +105,7 @@ public class HotelReservationSystem {
             while(resultSet.next()){
                 int reservationId = resultSet.getInt("reservation_id");
                 String guestName = resultSet.getString("guest_name");
-                int roomNumber = resultSet.getInt("rom_number");
+                int roomNumber = resultSet.getInt("room_number");
                 String ContactNumber = resultSet.getString("contact_number");
                 String reservationDate = resultSet.getTimestamp("reservation_date").toString();
 
@@ -141,6 +142,96 @@ public class HotelReservationSystem {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    private static void updateReservation(Connection connection, Scanner scanner){
+        try{
+            System.out.println("Enter reservation id to update: ");
+            int reservationId = scanner.nextInt();
+            scanner.nextLine();
+
+            if(!reservationExists(connection, reservationId)){
+                System.out.println("Reservation not found for given id.");
+                return;
+            }
+
+            System.out.println("Enter new guest name: ");
+            String newGuestName = scanner.nextLine();
+            System.out.println("Enter new room number: ");
+            int newRoomNumber = scanner.nextInt();
+            System.out.println("Enter new contact number: ");
+            String newContactNumber = scanner.next();
+
+            String sql = "UPDATE reservations SET guest_name = '" + newGuestName + "', " +
+                    "room_number = " + newRoomNumber + ", " +
+                    "contact_number = '" + newContactNumber + "' " +
+                    "WHERE reservation_id = " + reservationId;
+
+            try (Statement statement = connection.createStatement()) {
+                int affectedRows = statement.executeUpdate(sql);
+
+                if (affectedRows > 0) {
+                    System.out.println("Reservation updated successfully!");
+                } else {
+                    System.out.println("Reservation update failed.");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static boolean reservationExists(Connection connection, int reservationId) {
+        try {
+            String sql = "SELECT reservation_id FROM reservations WHERE reservation_id = " + reservationId;
+
+            try (Statement statement = connection.createStatement();
+                 ResultSet resultSet = statement.executeQuery(sql)) {
+
+                return resultSet.next();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private static void deleteReservation(Connection connection, Scanner scanner) {
+        try {
+            System.out.print("Enter reservation ID to delete: ");
+            int reservationId = scanner.nextInt();
+
+            if (!reservationExists(connection, reservationId)) {
+                System.out.println("Reservation not found for the given ID.");
+                return;
+            }
+
+            String sql = "DELETE FROM reservations WHERE reservation_id = " + reservationId;
+
+            try (Statement statement = connection.createStatement()) {
+                int affectedRows = statement.executeUpdate(sql);
+
+                if (affectedRows > 0) {
+                    System.out.println("Reservation deleted successfully!");
+                } else {
+                    System.out.println("Reservation deletion failed.");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void exit() throws InterruptedException {
+        System.out.print("Exiting System");
+        int i = 5;
+        while(i!=0){
+            System.out.print(".");
+            Thread.sleep(1000);
+            i--;
+        }
+        System.out.println();
+        System.out.println("ThankYou For Using Hotel Reservation System!!!");
     }
 }
 
